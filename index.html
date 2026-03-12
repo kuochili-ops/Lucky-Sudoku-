@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>阿幸數獨 2026 - 豪華慶祝版</title>
+    <title>阿幸數獨 2026 - 互動慶賀版</title>
     <style>
         :root {
             --bg-color: #f0f4f8;
             --primary: #3b82f6;
             --secondary: #64748b;
             --error: #ef4444;
-            --success: #22c55e;
             --cell-size: clamp(35px, 10vw, 45px);
         }
 
@@ -24,11 +23,11 @@
         .screen { display: none; flex-direction: column; align-items: center; width: 100%; height: 100%; justify-content: center; }
         .screen.active { display: flex; }
 
-        /* 數獨與控制 UI */
+        /* 遊戲介面 */
         .header { display: flex; justify-content: space-between; width: calc(var(--cell-size) * 9); margin-bottom: 10px; align-items: center; }
         .timer { font-size: 1.2rem; font-weight: bold; color: var(--secondary); font-variant-numeric: tabular-nums;}
         .sudoku-grid { display: grid; grid-template-columns: repeat(9, var(--cell-size)); border: 3px solid #1e293b; background: white; position: relative;}
-        .cell { width: var(--cell-size); height: var(--cell-size); border: 0.5px solid #cbd5e1; display: flex; justify-content: center; align-items: center; font-size: calc(var(--cell-size) * 0.7); cursor: pointer; transition: background 0.15s; user-select: none;}
+        .cell { width: var(--cell-size); height: var(--cell-size); border: 0.5px solid #cbd5e1; display: flex; justify-content: center; align-items: center; font-size: calc(var(--cell-size) * 0.7); cursor: pointer; transition: background 0.1s; user-select: none;}
         .cell.fixed { background: #f1f5f9; font-weight: 800; color: #1e293b;}
         .cell.conflict { color: var(--error); background: #fee2e2;}
         .cell.selected { background: #dbeafe; outline: 3px solid var(--primary); z-index: 5;}
@@ -36,66 +35,61 @@
         .cell:nth-child(9n) { border-right: 0.5px solid #cbd5e1; }
         .sudoku-grid > .cell:nth-child(n+19):nth-child(-n+27), .sudoku-grid > .cell:nth-child(n+46):nth-child(-n+54) { border-bottom: 3px solid #1e293b; }
 
-        /* 暫停與面板 */
+        /* 暫停 */
         #pauseOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(148, 163, 184, 0.9); display: none; justify-content: center; align-items: center; z-index: 200; backdrop-filter: blur(4px);}
+        
+        /* 數字面板 */
         .number-pad { position: absolute; display: none; grid-template-columns: repeat(3, 1fr); gap: 5px; padding: 8px; background: white; border-radius: 12px; box-shadow: 0 15px 35px rgba(0,0,0,0.3); z-index: 100; border: 1px solid #e2e8f0;}
-        .pad-btn { width: 45px; height: 45px; display: flex; justify-content: center; align-items: center; cursor: pointer; font-weight: bold; font-size: 1.2rem; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; transition: all 0.2s;}
-        .pad-btn:hover { background: var(--primary); color: white; transform: scale(1.1);}
+        .pad-btn { width: 45px; height: 45px; display: flex; justify-content: center; align-items: center; cursor: pointer; font-weight: bold; font-size: 1.2rem; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;}
 
-        /* ===== 超級慶祝畫面樣式 ===== */
+        /* ===== 慶祝畫面 (新增點擊提示) ===== */
         #winScreen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255, 255, 255, 0.1); /* 半透明 */
-            backdrop-filter: blur(15px); /* 磨砂玻璃模糊 */
-            -webkit-backdrop-filter: blur(15px);
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
             z-index: 1000; display: none; flex-direction: column;
-            justify-content: center; align-items: center; overflow: hidden;
+            justify-content: center; align-items: center;
+            cursor: pointer; /* 提示可以點擊 */
         }
 
         #confettiCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
 
         .big-congrats {
-            font-size: clamp(3rem, 15vw, 6rem); /* 動態大字 */
+            font-size: clamp(3rem, 15vw, 6rem);
             font-weight: 900;
-            background: linear-gradient(to bottom, #ff1f1f, #ff8c00, #ffee00, #22c55e, #3b82f6, #8b5cf6, #ff1f1f);
+            background: linear-gradient(to right, #ff1f1f, #ff8c00, #ffee00, #22c55e, #3b82f6, #8b5cf6, #ff1f1f);
             background-size: 200% auto;
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent; /* 漸變文字 */
-            animation: rainbowScroll 2s linear infinite, flyInScale 1s ease-out forwards;
-            text-align: center; margin: 0;
-            /* 霓虹陰影 */
-            text-shadow: 0 0 15px rgba(255,255,255,0.5), 0 0 30px rgba(255,20,147,0.3);
-            opacity: 0; /* 初始透明 */
+            -webkit-background-clip: text; background-clip: text; color: transparent;
+            animation: rainbowScroll 2s linear infinite, flyIn 0.8s ease-out forwards;
+            text-shadow: 0 0 20px rgba(255,255,255,0.4);
+            margin: 0;
+        }
+
+        .click-hint {
+            margin-top: 50px; color: #64748b; font-size: 1.1rem;
+            animation: pulse 1.5s infinite; font-weight: 500;
         }
 
         @keyframes rainbowScroll { to { background-position: 200% center; } }
-        @keyframes flyInScale {
-            0% { transform: scale(0.3) translateY(50px); opacity: 0; }
-            70% { transform: scale(1.1) translateY(-10px); opacity: 1; }
-            100% { transform: scale(1) translateY(0); opacity: 1; }
-        }
+        @keyframes flyIn { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
 
-        /* ===== 排行榜畫面 ===== */
-        .rank-container { background: rgba(255,255,255,0.9); padding: 25px; border-radius: 20px; width: 85%; max-width: 420px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.3); backdrop-filter: blur(5px);}
-        .rank-title { font-size: 1.6rem; color: #1e293b; margin-top: 15px; margin-bottom: 10px; border-bottom: 3px solid var(--primary); padding-bottom: 5px; font-weight: 800;}
-        .rank-item { display: flex; justify-content: space-between; padding: 8px 10px; border-bottom: 1px solid #eee; font-variant-numeric: tabular-nums; border-radius: 6px;}
-        .rank-item:nth-child(even) { background: rgba(241, 245, 249, 0.5); }
-        .new-record { color: #ffffff !important; background: var(--error) !important; font-weight: bold; animation: pulseRecord 1s infinite; box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);}
-
-        @keyframes pulseRecord { 50% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.8); } }
-        .btn-main { background: var(--primary); color: white; border: none; padding: 14px 40px; font-size: 1.2rem; border-radius: 50px; cursor: pointer; margin-top: 25px; font-weight: 800; transition: all 0.2s; box-shadow: 0 5px 15px rgba(59, 130, 246, 0.3);}
-        .btn-main:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(59, 130, 246, 0.5);}
-        .btn-main:active { transform: translateY(1px); }
+        /* ===== 排行榜 ===== */
+        .rank-container { background: rgba(255,255,255,0.95); padding: 25px; border-radius: 20px; width: 85%; max-width: 420px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+        .rank-title { font-size: 1.6rem; color: #1e293b; margin-top: 15px; border-bottom: 3px solid var(--primary); padding-bottom: 5px; font-weight: 800;}
+        .rank-item { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #eee; font-variant-numeric: tabular-nums;}
+        .new-record { color: #ffffff !important; background: var(--error) !important; font-weight: bold; border-radius: 8px; animation: glow 1s infinite alternate; }
+        
+        @keyframes glow { from { box-shadow: 0 0 5px #ef4444; } to { box-shadow: 0 0 20px #ef4444; } }
+        .btn-main { background: var(--primary); color: white; border: none; padding: 14px 40px; font-size: 1.2rem; border-radius: 50px; cursor: pointer; margin-top: 25px; font-weight: 800; }
     </style>
 </head>
 <body>
 
     <div id="startScreen" class="screen active">
         <div style="text-align:center; background:white; padding:40px; border-radius:25px; box-shadow:0 10px 25px rgba(0,0,0,0.1);">
-            <h1 style="color:#1e293b; font-size:2.5rem; margin-bottom:30px;">阿幸數獨 2026</h1>
-            <label style="color:var(--secondary); font-weight:bold; display:block; margin-bottom:10px;">請選擇挑戰難度</label>
-            <select id="difficulty" style="padding:12px; font-size:1.1rem; width:220px; border-radius:10px; border:2px solid #e2e8f0; margin-bottom:30px;">
+            <h1 style="font-size:2.5rem; margin-bottom:30px;">阿幸數獨 2026</h1>
+            <select id="difficulty" style="padding:12px; font-size:1.1rem; width:220px; border-radius:10px; margin-bottom:30px;">
                 <option value="easy">初級 (簡單)</option>
                 <option value="medium" selected>中級 (普通)</option>
                 <option value="hard">高級 (挑戰)</option>
@@ -107,9 +101,9 @@
     <div id="gameScreen" class="screen">
         <div class="header">
             <div class="timer" id="timer">00:00</div>
-            <button onclick="togglePause()" id="pauseBtn" style="padding:6px 18px; border-radius:8px; background:#e2e8f0; border:none; cursor:pointer; font-weight:bold;">暫停</button>
+            <button onclick="togglePause()" id="pauseBtn" style="padding:6px 18px; border-radius:8px; border:none; cursor:pointer; font-weight:bold;">暫停</button>
         </div>
-        <div style="position:relative; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
+        <div style="position:relative;">
             <div id="pauseOverlay"><button class="btn-main" onclick="togglePause()">繼續遊戲</button></div>
             <div class="sudoku-grid" id="grid"></div>
         </div>
@@ -117,23 +111,23 @@
             <div class="pad-btn" onclick="handleInput(1)">1</div><div class="pad-btn" onclick="handleInput(2)">2</div><div class="pad-btn" onclick="handleInput(3)">3</div>
             <div class="pad-btn" onclick="handleInput(4)">4</div><div class="pad-btn" onclick="handleInput(5)">5</div><div class="pad-btn" onclick="handleInput(6)">6</div>
             <div class="pad-btn" onclick="handleInput(7)">7</div><div class="pad-btn" onclick="handleInput(8)">8</div><div class="pad-btn" onclick="handleInput(9)">9</div>
-            <div class="pad-btn" style="grid-column:span 3; height:35px; font-size:1rem; background:#f1f5f9; color:var(--secondary);" onclick="handleInput(null)">清除</div>
+            <div class="pad-btn" style="grid-column:span 3; height:35px; font-size:1rem; background:#f1f5f9;" onclick="handleInput(null)">清除</div>
         </div>
     </div>
 
-    <div id="winScreen">
+    <div id="winScreen" onclick="showLeaderboard()">
         <canvas id="confettiCanvas"></canvas>
         <h1 class="big-congrats">恭喜完成！</h1>
-        <p id="thisTime" style="font-size:2rem; font-weight:bold; color:#1e293b; margin-top:10px; z-index:10; font-variant-numeric: tabular-nums;"></p>
+        <p id="thisTime" style="font-size:2rem; font-weight:bold; color:#1e293b; margin-top:10px; z-index:10;"></p>
+        <div class="click-hint">—— 點擊螢幕查看紀錄 ——</div>
     </div>
 
     <div id="leaderboardScreen" class="screen">
         <div class="rank-container" id="rankContent"></div>
-        <button class="btn-main" onclick="location.reload()">再玩一局</button>
+        <button class="btn-main" onclick="location.reload()">回主選單</button>
     </div>
 
     <script>
-        // 遊戲核心邏輯 (維持不變)
         let gameState = [], fixedMask = [], selectedIdx = null;
         let timerSeconds = 0, timerInterval = null, isPaused = false;
         let currentDifficulty = 'medium';
@@ -173,93 +167,19 @@
             if (!gameState.includes(0) && !document.querySelector('.conflict')) win();
         }
 
-        // ==========================================
-        // ===== 豪華勝利邏輯與彩帶動畫 =====
-        // ==========================================
+        // --- 勝利邏輯：啟動動畫，但不自動跳轉 ---
         let confettiAnimationId = null;
-
         function win() {
             clearInterval(timerInterval);
             const timeStr = document.getElementById('timer').innerText;
             document.getElementById('thisTime').innerText = `耗時 ${timeStr}`;
-            
             saveRecord(currentDifficulty, timerSeconds);
-
-            // 顯示豪华勝利畫面
             document.getElementById('winScreen').style.display = 'flex';
-
-            // 啟動 3D 彩帶動畫
             initConfetti();
-
-            // 1.2 秒後自動進入排行榜
-            setTimeout(showLeaderboard, 1200);
         }
 
-        // --- 3D Confetti 彩帶 Canvas 動畫 ---
-        function initConfetti() {
-            const canvas = document.getElementById('confettiCanvas');
-            const ctx = canvas.getContext('2d');
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-
-            let pieces = [];
-            const numberOfPieces = 200;
-            const colors = ['#f44336', '#e91e63', '#9c27b0', '#673ab7', '#3f51b5', '#2196f3', '#03a9f4', '#00bcd4', '#009688', '#4caf50', '#8bc34a', '#cddc39', '#ffeb3b', '#ffc107', '#ff9800', '#ff5722'];
-
-            class ConfettiPiece {
-                constructor() {
-                    this.x = Math.random() * canvas.width;
-                    this.y = Math.random() * canvas.height - canvas.height; // 從螢幕上方開始
-                    this.rotation = Math.random() * 360;
-                    this.rotationSpeed = Math.random() * 10 - 5;
-                    this.speed = Math.random() * 5 + 2;
-                    this.color = colors[Math.floor(Math.random() * colors.length)];
-                    this.width = Math.random() * 8 + 4;
-                    this.height = Math.random() * 10 + 10;
-                    // 3D 效果需要的屬性
-                    this.rSpeed = Math.random() * 0.05 + 0.01;
-                    this.rAngle = Math.random() * Math.PI * 2;
-                }
-                update() {
-                    this.y += this.speed;
-                    this.rAngle += this.rSpeed; // 3D 旋轉角度
-                    this.rotation += this.rotationSpeed;
-                    if (this.y > canvas.height) { // 重置到上方
-                        this.y = -20;
-                        this.x = Math.random() * canvas.width;
-                    }
-                }
-                draw() {
-                    ctx.save();
-                    ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
-                    ctx.rotate(this.rotation * Math.PI / 180);
-                    // 模擬 3D 翻轉 (改變 scaleY)
-                    ctx.scale(1, Math.sin(this.rAngle)); 
-                    ctx.fillStyle = this.color;
-                    ctx.fillRect(-this.width / 2, -this.height / 2, this.width, this.height);
-                    ctx.restore();
-                }
-            }
-
-            for (let i = 0; i < numberOfPieces; i++) {
-                pieces.push(new ConfettiPiece());
-            }
-
-            function animateConfetti() {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                pieces.forEach(p => {
-                    p.update();
-                    p.draw();
-                });
-                confettiAnimationId = requestAnimationFrame(animateConfetti);
-            }
-            animateConfetti();
-        }
-
-        // ==========================================
-
+        // --- 跳轉排行榜 ---
         function showLeaderboard() {
-            // 停止 Canvas 動畫節省資源
             if (confettiAnimationId) cancelAnimationFrame(confettiAnimationId);
             document.getElementById('winScreen').style.display = 'none';
 
@@ -268,7 +188,7 @@
             container.innerHTML = '<h1 style="text-align:center; color:var(--primary); margin:0;">阿幸數獨 英雄榜</h1>';
 
             const diffNames = { easy: '初級 (簡單)', medium: '中級 (普通)', hard: '高級 (挑戰)' };
-            for (let diff in diffNames) { // 確保三個難度都顯示
+            for (let diff in diffNames) {
                 let html = `<div class="rank-title">${diffNames[diff]}</div>`;
                 const diffRecords = records[diff] || [];
                 if (diffRecords.length === 0) {
@@ -292,7 +212,49 @@
             document.getElementById('leaderboardScreen').classList.add('active');
         }
 
-        // --- 紀錄與基礎數獨邏輯 (維持不變) ---
+        // --- 3D 彩帶動畫 (維持邏輯) ---
+        function initConfetti() {
+            const canvas = document.getElementById('confettiCanvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            let pieces = [];
+            const colors = ['#f44336', '#e91e63', '#9c27b0', '#673ab7', '#3f51b5', '#2196f3', '#4caf50', '#ffeb3b', '#ff9800'];
+
+            for (let i = 0; i < 150; i++) {
+                pieces.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height - canvas.height,
+                    rotation: Math.random() * 360,
+                    rotationSpeed: Math.random() * 10 - 5,
+                    speed: Math.random() * 4 + 2,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    width: Math.random() * 8 + 4,
+                    height: Math.random() * 10 + 10,
+                    rSpeed: Math.random() * 0.05 + 0.01,
+                    rAngle: Math.random() * Math.PI * 2
+                });
+            }
+
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                pieces.forEach(p => {
+                    p.y += p.speed; p.rAngle += p.rSpeed; p.rotation += p.rotationSpeed;
+                    if (p.y > canvas.height) p.y = -20;
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate(p.rotation * Math.PI / 180);
+                    ctx.scale(1, Math.sin(p.rAngle));
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(-p.width/2, -p.height/2, p.width, p.height);
+                    ctx.restore();
+                });
+                confettiAnimationId = requestAnimationFrame(animate);
+            }
+            animate();
+        }
+
+        // --- 基礎邏輯 (不變) ---
         function saveRecord(diff, seconds) {
             let records = JSON.parse(localStorage.getItem('sudoku_ranks') || '{"easy":[],"medium":[],"hard":[]}');
             const newEntry = { id: Date.now(), time: seconds, date: new Date().toLocaleDateString() };
