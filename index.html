@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>阿幸數獨 2026 - 排行榜版</title>
+    <title>阿幸數獨 2026 - 豪華慶祝版</title>
     <style>
         :root {
             --bg-color: #f0f4f8;
             --primary: #3b82f6;
             --secondary: #64748b;
             --error: #ef4444;
+            --success: #22c55e;
             --cell-size: clamp(35px, 10vw, 45px);
         }
 
@@ -25,65 +26,105 @@
 
         /* 數獨與控制 UI */
         .header { display: flex; justify-content: space-between; width: calc(var(--cell-size) * 9); margin-bottom: 10px; align-items: center; }
-        .timer { font-size: 1.2rem; font-weight: bold; color: var(--secondary); }
-        .sudoku-grid { display: grid; grid-template-columns: repeat(9, var(--cell-size)); border: 3px solid #1e293b; background: white; }
-        .cell { width: var(--cell-size); height: var(--cell-size); border: 0.5px solid #cbd5e1; display: flex; justify-content: center; align-items: center; font-size: calc(var(--cell-size) * 0.6); cursor: pointer; }
-        .cell.fixed { background: #f1f5f9; font-weight: 800; }
-        .cell.conflict { color: var(--error); background: #fee2e2; }
-        .cell.selected { background: #dbeafe; outline: 2px solid var(--primary); z-index: 5; }
+        .timer { font-size: 1.2rem; font-weight: bold; color: var(--secondary); font-variant-numeric: tabular-nums;}
+        .sudoku-grid { display: grid; grid-template-columns: repeat(9, var(--cell-size)); border: 3px solid #1e293b; background: white; position: relative;}
+        .cell { width: var(--cell-size); height: var(--cell-size); border: 0.5px solid #cbd5e1; display: flex; justify-content: center; align-items: center; font-size: calc(var(--cell-size) * 0.7); cursor: pointer; transition: background 0.15s; user-select: none;}
+        .cell.fixed { background: #f1f5f9; font-weight: 800; color: #1e293b;}
+        .cell.conflict { color: var(--error); background: #fee2e2;}
+        .cell.selected { background: #dbeafe; outline: 3px solid var(--primary); z-index: 5;}
         .cell:nth-child(3n) { border-right: 2px solid #1e293b; }
         .cell:nth-child(9n) { border-right: 0.5px solid #cbd5e1; }
         .sudoku-grid > .cell:nth-child(n+19):nth-child(-n+27), .sudoku-grid > .cell:nth-child(n+46):nth-child(-n+54) { border-bottom: 3px solid #1e293b; }
 
         /* 暫停與面板 */
-        #pauseOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #cbd5e1; display: none; justify-content: center; align-items: center; z-index: 200; }
-        .number-pad { position: absolute; display: none; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 6px; background: white; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 100; }
-        .pad-btn { width: 42px; height: 42px; display: flex; justify-content: center; align-items: center; cursor: pointer; font-weight: bold; background: #f8fafc; border-radius: 4px; border: 1px solid #ddd; }
+        #pauseOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(148, 163, 184, 0.9); display: none; justify-content: center; align-items: center; z-index: 200; backdrop-filter: blur(4px);}
+        .number-pad { position: absolute; display: none; grid-template-columns: repeat(3, 1fr); gap: 5px; padding: 8px; background: white; border-radius: 12px; box-shadow: 0 15px 35px rgba(0,0,0,0.3); z-index: 100; border: 1px solid #e2e8f0;}
+        .pad-btn { width: 45px; height: 45px; display: flex; justify-content: center; align-items: center; cursor: pointer; font-weight: bold; font-size: 1.2rem; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; transition: all 0.2s;}
+        .pad-btn:hover { background: var(--primary); color: white; transform: scale(1.1);}
 
-        /* 排行榜畫面 */
-        .rank-container { background: white; padding: 20px; border-radius: 15px; width: 85%; max-width: 400px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        .rank-title { font-size: 1.5rem; color: #1e293b; margin-bottom: 15px; border-bottom: 2px solid var(--primary); padding-bottom: 5px; }
-        .rank-item { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px dashed #eee; font-variant-numeric: tabular-nums; }
-        .new-record { color: var(--error); font-weight: bold; animation: blink 0.8s infinite; }
+        /* ===== 超級慶祝畫面樣式 ===== */
+        #winScreen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.1); /* 半透明 */
+            backdrop-filter: blur(15px); /* 磨砂玻璃模糊 */
+            -webkit-backdrop-filter: blur(15px);
+            z-index: 1000; display: none; flex-direction: column;
+            justify-content: center; align-items: center; overflow: hidden;
+        }
 
-        @keyframes blink { 50% { opacity: 0.5; } }
-        .btn-main { background: var(--primary); color: white; border: none; padding: 12px 30px; font-size: 1.1rem; border-radius: 50px; cursor: pointer; margin-top: 20px; font-weight: bold; }
+        #confettiCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+
+        .big-congrats {
+            font-size: clamp(3rem, 15vw, 6rem); /* 動態大字 */
+            font-weight: 900;
+            background: linear-gradient(to bottom, #ff1f1f, #ff8c00, #ffee00, #22c55e, #3b82f6, #8b5cf6, #ff1f1f);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent; /* 漸變文字 */
+            animation: rainbowScroll 2s linear infinite, flyInScale 1s ease-out forwards;
+            text-align: center; margin: 0;
+            /* 霓虹陰影 */
+            text-shadow: 0 0 15px rgba(255,255,255,0.5), 0 0 30px rgba(255,20,147,0.3);
+            opacity: 0; /* 初始透明 */
+        }
+
+        @keyframes rainbowScroll { to { background-position: 200% center; } }
+        @keyframes flyInScale {
+            0% { transform: scale(0.3) translateY(50px); opacity: 0; }
+            70% { transform: scale(1.1) translateY(-10px); opacity: 1; }
+            100% { transform: scale(1) translateY(0); opacity: 1; }
+        }
+
+        /* ===== 排行榜畫面 ===== */
+        .rank-container { background: rgba(255,255,255,0.9); padding: 25px; border-radius: 20px; width: 85%; max-width: 420px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.3); backdrop-filter: blur(5px);}
+        .rank-title { font-size: 1.6rem; color: #1e293b; margin-top: 15px; margin-bottom: 10px; border-bottom: 3px solid var(--primary); padding-bottom: 5px; font-weight: 800;}
+        .rank-item { display: flex; justify-content: space-between; padding: 8px 10px; border-bottom: 1px solid #eee; font-variant-numeric: tabular-nums; border-radius: 6px;}
+        .rank-item:nth-child(even) { background: rgba(241, 245, 249, 0.5); }
+        .new-record { color: #ffffff !important; background: var(--error) !important; font-weight: bold; animation: pulseRecord 1s infinite; box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);}
+
+        @keyframes pulseRecord { 50% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.8); } }
+        .btn-main { background: var(--primary); color: white; border: none; padding: 14px 40px; font-size: 1.2rem; border-radius: 50px; cursor: pointer; margin-top: 25px; font-weight: 800; transition: all 0.2s; box-shadow: 0 5px 15px rgba(59, 130, 246, 0.3);}
+        .btn-main:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(59, 130, 246, 0.5);}
+        .btn-main:active { transform: translateY(1px); }
     </style>
 </head>
 <body>
 
     <div id="startScreen" class="screen active">
-        <div style="text-align:center">
-            <h1>阿幸數獨 2026</h1>
-            <select id="difficulty" style="padding:10px; font-size:1rem; width:200px; margin-bottom:20px;">
+        <div style="text-align:center; background:white; padding:40px; border-radius:25px; box-shadow:0 10px 25px rgba(0,0,0,0.1);">
+            <h1 style="color:#1e293b; font-size:2.5rem; margin-bottom:30px;">阿幸數獨 2026</h1>
+            <label style="color:var(--secondary); font-weight:bold; display:block; margin-bottom:10px;">請選擇挑戰難度</label>
+            <select id="difficulty" style="padding:12px; font-size:1.1rem; width:220px; border-radius:10px; border:2px solid #e2e8f0; margin-bottom:30px;">
                 <option value="easy">初級 (簡單)</option>
                 <option value="medium" selected>中級 (普通)</option>
                 <option value="hard">高級 (挑戰)</option>
             </select><br>
-            <button class="btn-main" onclick="startGame()">開始遊戲</button>
+            <button class="btn-main" onclick="startGame()">開始挑戰</button>
         </div>
     </div>
 
     <div id="gameScreen" class="screen">
         <div class="header">
             <div class="timer" id="timer">00:00</div>
-            <button onclick="togglePause()" id="pauseBtn" style="padding:5px 15px">暫停</button>
+            <button onclick="togglePause()" id="pauseBtn" style="padding:6px 18px; border-radius:8px; background:#e2e8f0; border:none; cursor:pointer; font-weight:bold;">暫停</button>
         </div>
-        <div style="position:relative">
-            <div id="pauseOverlay"><button class="btn-main" onclick="togglePause()">繼續</button></div>
+        <div style="position:relative; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
+            <div id="pauseOverlay"><button class="btn-main" onclick="togglePause()">繼續遊戲</button></div>
             <div class="sudoku-grid" id="grid"></div>
         </div>
         <div class="number-pad" id="numberPad">
             <div class="pad-btn" onclick="handleInput(1)">1</div><div class="pad-btn" onclick="handleInput(2)">2</div><div class="pad-btn" onclick="handleInput(3)">3</div>
             <div class="pad-btn" onclick="handleInput(4)">4</div><div class="pad-btn" onclick="handleInput(5)">5</div><div class="pad-btn" onclick="handleInput(6)">6</div>
             <div class="pad-btn" onclick="handleInput(7)">7</div><div class="pad-btn" onclick="handleInput(8)">8</div><div class="pad-btn" onclick="handleInput(9)">9</div>
-            <div class="pad-btn" style="grid-column:span 3; height:30px" onclick="handleInput(null)">清除</div>
+            <div class="pad-btn" style="grid-column:span 3; height:35px; font-size:1rem; background:#f1f5f9; color:var(--secondary);" onclick="handleInput(null)">清除</div>
         </div>
     </div>
 
-    <div id="winScreen" class="screen" style="background:rgba(255,255,255,0.9)">
-        <h1 style="font-size:3.5rem; color:var(--error); margin:0">恭喜完成！</h1>
-        <p id="thisTime" style="font-size:1.5rem"></p>
+    <div id="winScreen">
+        <canvas id="confettiCanvas"></canvas>
+        <h1 class="big-congrats">恭喜完成！</h1>
+        <p id="thisTime" style="font-size:2rem; font-weight:bold; color:#1e293b; margin-top:10px; z-index:10; font-variant-numeric: tabular-nums;"></p>
     </div>
 
     <div id="leaderboardScreen" class="screen">
@@ -92,11 +133,11 @@
     </div>
 
     <script>
+        // 遊戲核心邏輯 (維持不變)
         let gameState = [], fixedMask = [], selectedIdx = null;
         let timerSeconds = 0, timerInterval = null, isPaused = false;
         let currentDifficulty = 'medium';
         let latestRecordId = null;
-
         const HOLES = { easy: 30, medium: 45, hard: 58 };
 
         function startGame() {
@@ -104,7 +145,7 @@
             generatePuzzle(HOLES[currentDifficulty]);
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById('gameScreen').classList.add('active');
-            startTimer();
+            timerSeconds = 0; startTimer();
         }
 
         function startTimer() {
@@ -132,64 +173,134 @@
             if (!gameState.includes(0) && !document.querySelector('.conflict')) win();
         }
 
+        // ==========================================
+        // ===== 豪華勝利邏輯與彩帶動畫 =====
+        // ==========================================
+        let confettiAnimationId = null;
+
         function win() {
             clearInterval(timerInterval);
             const timeStr = document.getElementById('timer').innerText;
-            document.getElementById('thisTime').innerText = `最終時間：${timeStr}`;
+            document.getElementById('thisTime').innerText = `耗時 ${timeStr}`;
             
-            // 紀錄成績
             saveRecord(currentDifficulty, timerSeconds);
 
-            // 顯示恭喜畫面
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById('winScreen').classList.add('active');
+            // 顯示豪华勝利畫面
+            document.getElementById('winScreen').style.display = 'flex';
 
-            // 1 秒後進入排行榜
-            setTimeout(showLeaderboard, 1000);
+            // 啟動 3D 彩帶動畫
+            initConfetti();
+
+            // 1.2 秒後自動進入排行榜
+            setTimeout(showLeaderboard, 1200);
         }
 
-        function saveRecord(diff, seconds) {
-            let records = JSON.parse(localStorage.getItem('sudoku_ranks') || '{"easy":[],"medium":[],"hard":[]}');
-            const newEntry = { id: Date.now(), time: seconds, date: new Date().toLocaleDateString() };
-            records[diff].push(newEntry);
-            records[diff].sort((a, b) => a.time - b.time);
-            records[diff] = records[diff].slice(0, 5); // 只取前五
-            localStorage.setItem('sudoku_ranks', JSON.stringify(records));
-            
-            // 檢查是否進榜
-            if (records[diff].find(r => r.id === newEntry.id)) {
-                latestRecordId = newEntry.id;
+        // --- 3D Confetti 彩帶 Canvas 動畫 ---
+        function initConfetti() {
+            const canvas = document.getElementById('confettiCanvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            let pieces = [];
+            const numberOfPieces = 200;
+            const colors = ['#f44336', '#e91e63', '#9c27b0', '#673ab7', '#3f51b5', '#2196f3', '#03a9f4', '#00bcd4', '#009688', '#4caf50', '#8bc34a', '#cddc39', '#ffeb3b', '#ffc107', '#ff9800', '#ff5722'];
+
+            class ConfettiPiece {
+                constructor() {
+                    this.x = Math.random() * canvas.width;
+                    this.y = Math.random() * canvas.height - canvas.height; // 從螢幕上方開始
+                    this.rotation = Math.random() * 360;
+                    this.rotationSpeed = Math.random() * 10 - 5;
+                    this.speed = Math.random() * 5 + 2;
+                    this.color = colors[Math.floor(Math.random() * colors.length)];
+                    this.width = Math.random() * 8 + 4;
+                    this.height = Math.random() * 10 + 10;
+                    // 3D 效果需要的屬性
+                    this.rSpeed = Math.random() * 0.05 + 0.01;
+                    this.rAngle = Math.random() * Math.PI * 2;
+                }
+                update() {
+                    this.y += this.speed;
+                    this.rAngle += this.rSpeed; // 3D 旋轉角度
+                    this.rotation += this.rotationSpeed;
+                    if (this.y > canvas.height) { // 重置到上方
+                        this.y = -20;
+                        this.x = Math.random() * canvas.width;
+                    }
+                }
+                draw() {
+                    ctx.save();
+                    ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
+                    ctx.rotate(this.rotation * Math.PI / 180);
+                    // 模擬 3D 翻轉 (改變 scaleY)
+                    ctx.scale(1, Math.sin(this.rAngle)); 
+                    ctx.fillStyle = this.color;
+                    ctx.fillRect(-this.width / 2, -this.height / 2, this.width, this.height);
+                    ctx.restore();
+                }
             }
+
+            for (let i = 0; i < numberOfPieces; i++) {
+                pieces.push(new ConfettiPiece());
+            }
+
+            function animateConfetti() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                pieces.forEach(p => {
+                    p.update();
+                    p.draw();
+                });
+                confettiAnimationId = requestAnimationFrame(animateConfetti);
+            }
+            animateConfetti();
         }
+
+        // ==========================================
 
         function showLeaderboard() {
-            const records = JSON.parse(localStorage.getItem('sudoku_ranks'));
+            // 停止 Canvas 動畫節省資源
+            if (confettiAnimationId) cancelAnimationFrame(confettiAnimationId);
+            document.getElementById('winScreen').style.display = 'none';
+
+            const records = JSON.parse(localStorage.getItem('sudoku_ranks') || '{}');
             const container = document.getElementById('rankContent');
-            container.innerHTML = '<h1>英雄榜 (TOP 5)</h1>';
+            container.innerHTML = '<h1 style="text-align:center; color:var(--primary); margin:0;">阿幸數獨 英雄榜</h1>';
 
             const diffNames = { easy: '初級 (簡單)', medium: '中級 (普通)', hard: '高級 (挑戰)' };
-
-            for (let diff in records) {
+            for (let diff in diffNames) { // 確保三個難度都顯示
                 let html = `<div class="rank-title">${diffNames[diff]}</div>`;
-                if (records[diff].length === 0) html += '<p>尚無記錄</p>';
-                records[diff].forEach((r, index) => {
-                    const m = Math.floor(r.time/60).toString().padStart(2, '0');
-                    const s = (r.time%60).toString().padStart(2, '0');
-                    const isNew = r.id === latestRecordId;
-                    html += `
-                        <div class="rank-item ${isNew ? 'new-record' : ''}">
-                            <span>第 ${index + 1} 名</span>
-                            <span>${m}:${s}</span>
-                        </div>`;
-                });
+                const diffRecords = records[diff] || [];
+                if (diffRecords.length === 0) {
+                    html += '<p style="color:var(--secondary); text-align:center;">尚無挑戰記錄</p>';
+                } else {
+                    diffRecords.forEach((r, index) => {
+                        const m = Math.floor(r.time/60).toString().padStart(2, '0');
+                        const s = (r.time%60).toString().padStart(2, '0');
+                        const isNew = r.id === latestRecordId;
+                        html += `
+                            <div class="rank-item ${isNew ? 'new-record' : ''}">
+                                <span>NO.${index + 1}</span>
+                                <span style="font-weight:bold;">${m}:${s}</span>
+                                <span style="font-size:0.8rem; opacity:0.8;">${r.date}</span>
+                            </div>`;
+                    });
+                }
                 container.innerHTML += html;
             }
-
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById('leaderboardScreen').classList.add('active');
         }
 
-        // --- 數獨生成與渲染邏輯 (同前版) ---
+        // --- 紀錄與基礎數獨邏輯 (維持不變) ---
+        function saveRecord(diff, seconds) {
+            let records = JSON.parse(localStorage.getItem('sudoku_ranks') || '{"easy":[],"medium":[],"hard":[]}');
+            const newEntry = { id: Date.now(), time: seconds, date: new Date().toLocaleDateString() };
+            records[diff].push(newEntry); records[diff].sort((a, b) => a.time - b.time); records[diff] = records[diff].slice(0, 5);
+            localStorage.setItem('sudoku_ranks', JSON.stringify(records));
+            latestRecordId = records[diff].find(r => r.id === newEntry.id) ? newEntry.id : null;
+        }
+
         function generatePuzzle(holes) {
             gameState = solveSudoku(Array(81).fill(0));
             fixedMask = Array(81).fill(true);
@@ -206,35 +317,28 @@
             grid.innerHTML = '';
             gameState.forEach((val, i) => {
                 const cell = document.createElement('div');
-                cell.className = `cell ${fixedMask[i] ? 'fixed' : ''}`;
-                cell.innerText = val || '';
+                cell.className = `cell ${fixedMask[i] ? 'fixed' : ''}`; cell.innerText = val || '';
                 if (!fixedMask[i]) cell.onclick = (e) => {
-                    if (isPaused) return;
-                    e.stopPropagation(); selectedIdx = i;
+                    if (isPaused) return; e.stopPropagation(); selectedIdx = i;
                     document.querySelectorAll('.cell').forEach(c => c.classList.remove('selected'));
                     cell.classList.add('selected');
                     const rect = cell.getBoundingClientRect();
                     const pad = document.getElementById('numberPad');
-                    pad.style.display = 'grid';
-                    pad.style.left = `${Math.min(rect.left, window.innerWidth - 150)}px`;
-                    pad.style.top = `${rect.top}px`;
-                };
-                grid.appendChild(cell);
-            });
-            validate();
+                    pad.style.display = 'grid'; pad.style.left = `${Math.min(rect.left, window.innerWidth - 160)}px`; pad.style.top = `${rect.top}px`;
+                }; grid.appendChild(cell);
+            }); validate();
         }
 
         function validate() {
             const cells = document.getElementById('grid').children;
             gameState.forEach((val, i) => {
                 if (!val) return;
-                let r = Math.floor(i/9), c = i%9, conflict = false;
+                let r=Math.floor(i/9),c=i%9,conflict=false;
                 gameState.forEach((v2, j) => {
                     if (i === j || v2 !== val) return;
-                    let r2 = Math.floor(j/9), c2 = j%9;
-                    if (r===r2 || c===c2 || (Math.floor(r/3)===Math.floor(r2/3) && Math.floor(c/3)===Math.floor(c2/3))) conflict = true;
-                });
-                if (conflict) cells[i].classList.add('conflict');
+                    let r2=Math.floor(j/9), c2=j%9;
+                    if (r===r2 || c===c2 || (Math.floor(r/3)===Math.floor(r2/3)&&Math.floor(c/3)===Math.floor(c2/3))) conflict=true;
+                }); if (conflict) cells[i].classList.add('conflict');
             });
         }
 
@@ -243,18 +347,14 @@
                 let rr = Math.floor(idx/9), cc = idx%9;
                 for (let i=0; i<9; i++) if (b[rr*9+i]===n || b[i*9+cc]===n) return false;
                 let br=Math.floor(rr/3)*3, bc=Math.floor(cc/3)*3;
-                for(let i=0;i<3;i++) for(let j=0;j<3;j++) if(b[(br+i)*9+bc+j]===n) return false;
-                return true;
+                for(let i=0;i<3;i++) for(let j=0;j<3;j++) if(b[(br+i)*9+bc+j]===n) return false; return true;
             };
             const rec = (idx) => {
                 if (idx === 81) return true;
                 let nums = [1,2,3,4,5,6,7,8,9].sort(() => Math.random()-0.5);
-                for (let n of nums) if (isValid(idx, n)) { b[idx]=n; if (rec(idx+1)) return true; b[idx]=0; }
-                return false;
-            };
-            rec(0); return b;
+                for (let n of nums) if (isValid(idx, n)) { b[idx]=n; if (rec(idx+1)) return true; b[idx]=0; } return false;
+            }; rec(0); return b;
         }
-
         window.onclick = () => document.getElementById('numberPad').style.display = 'none';
     </script>
 </body>
